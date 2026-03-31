@@ -51,10 +51,10 @@ async def sync_history(db: Session, client: RpsClient, max_pages: int, stop_when
     inserted_total = 0
     while cursor and pages < max_pages:
         page = await client.get_history_page(cursor)
-        inserted = _store_page(db, [match.model_dump() for match in page.data])
+        inserted = _store_page(db, page["data"])
         inserted_total += inserted
         pages += 1
-        cursor = page.cursor
+        cursor = page["cursor"]
         _upsert_cursor(db, cursor)
         if stop_when_no_new and inserted == 0:
             break
