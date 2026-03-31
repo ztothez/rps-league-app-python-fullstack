@@ -1,0 +1,122 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>RPS League Dashboard</title>
+    <link rel="stylesheet" href="/static/styles.css" />
+  </head>
+  <body>
+    <main class="container">
+      <header>
+        <h1>RPS League Dashboard</h1>
+        <p>Python full-stack assignment demo</p>
+        <div class="kpis">
+          <div class="kpi">
+            <span>Loaded Matches</span>
+            <strong id="kpiMatches">0</strong>
+          </div>
+          <div class="kpi">
+            <span>Today Players</span>
+            <strong id="kpiTodayPlayers">0</strong>
+          </div>
+          <div class="kpi">
+            <span>Live Status</span>
+            <strong id="kpiLiveStatus" class="status-warn">Connecting</strong>
+          </div>
+        </div>
+      </header>
+
+      <section class="panel">
+        <h2>Filters</h2>
+        <form id="filters">
+          <label>
+            Player
+            <input id="player" type="text" placeholder="e.g. roosa" />
+          </label>
+          <label>
+            Day
+            <input id="date" type="date" />
+          </label>
+          <label>
+            Start Date
+            <input id="startDate" type="date" />
+          </label>
+          <label>
+            End Date
+            <input id="endDate" type="date" />
+          </label>
+          <button type="submit">Apply</button>
+          <button id="clearFilters" type="button">Clear</button>
+        </form>
+      </section>
+
+      <section class="grid">
+        <article class="panel">
+          <h2>Latest Matches</h2>
+          <table>
+            <thead>
+              <tr>
+                <th>Time</th>
+                <th>Player A</th>
+                <th>Throw A</th>
+                <th>Player B</th>
+                <th>Throw B</th>
+                <th>Winner</th>
+              </tr>
+            </thead>
+            <tbody id="matchesBody"></tbody>
+          </table>
+        </article>
+
+        <article class="panel">
+          <h2>Today Leaderboard</h2>
+          <table>
+            <thead>
+              <tr>
+                <th>Player</th>
+                <th>Wins</th>
+                <th>Losses</th>
+                <th>Draws</th>
+                <th>Games</th>
+                <th>Win %</th>
+              </tr>
+            </thead>
+            <tbody id="todayLeaderboardBody"></tbody>
+          </table>
+        </article>
+      </section>
+
+      <section class="panel">
+        <h2>Historical Leaderboard</h2>
+        <table>
+          <thead>
+            <tr>
+              <th>Player</th>
+              <th>Wins</th>
+              <th>Losses</th>
+              <th>Draws</th>
+              <th>Games</th>
+              <th>Win %</th>
+            </tr>
+          </thead>
+          <tbody id="historyLeaderboardBody"></tbody>
+        </table>
+      </section>
+
+      <section class="panel">
+        <h2>Top 5 Players by Wins (Current Filter)</h2>
+        <p class="hint">Uses historical leaderboard response and updates whenever filters change.</p>
+        <ol id="topPlayersChart" class="top-chart" aria-label="Top 5 players chart"></ol>
+      </section>
+
+      <section class="panel">
+        <h2>Live Feed</h2>
+        <p class="hint">Shows latest upstream events, capped to 25 entries.</p>
+        <ul id="liveFeed" class="live-feed"></ul>
+      </section>
+    </main>
+
+    <script src="/static/app.js"></script>
+  </body>
+</html>

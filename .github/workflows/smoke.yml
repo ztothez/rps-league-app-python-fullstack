@@ -1,0 +1,59 @@
+name: Smoke Test
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  smoke:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+
+      - name: Create runtime .env
+        run: |
+          cp .env.example .env
+          # Keep workflow reproducible without exposing secrets.
+          # Disable startup backfill so CI does not depend on external API/token.
+          sed -i 's/^RPS_TOKEN=.*/RPS_TOKEN=dummy-token-for-ci/' .env
+          sed -i 's/^INITIAL_SYNC_PAGES=.*/INITIAL_SYNC_PAGES=0/' .env
+          sed -i 's/^SYNC_PAGES_PER_RUN=.*/SYNC_PAGES_PER_RUN=0/' .env
+
+      - name: Start app
+        run: |
+          nohup uvicorn app.main:app --host 127.0.0.1 --port 4000 > uvicorn.log 2>&1 &
+
+      - name: Wait for app to be ready
+        run: |
+          for i in {1..30}; do
+            if curl -fsS http://127.0.0.1:4000/docs >/dev/null; then
+              exit 0
+            fi
+            sleep 1
+          done
+          echo "App did not become ready in time."
+          echo "--- uvicorn.log ---"
+          cat uvicorn.log
+          exit 1
+
+      - name: Run smoke tests
+        run: ./scripts/smoke_test.sh http://127.0.0.1:4000
+
+      - name: Print logs on failure
+        if: failure()
+        run: |
+          echo "--- uvicorn.log ---"
+          cat uvicorn.log
