@@ -19,34 +19,58 @@ function formatDate(value) {
   return new Date(value).toLocaleString();
 }
 
+function cell(value, className) {
+  const td = document.createElement("td");
+  if (className) td.className = className;
+  td.textContent = value;
+  return td;
+}
+
+function replaceRows(tbody, rows, emptyMessage) {
+  tbody.replaceChildren(...(rows.length ? rows : [rowEmpty(6, emptyMessage)]));
+}
+
 function rowMatch(m) {
-  return `<tr>
-    <td>${formatDate(m.played_at)}</td>
-    <td>${m.player_a}</td>
-    <td>${m.throw_a}</td>
-    <td>${m.player_b}</td>
-    <td>${m.throw_b}</td>
-    <td>${m.winner}</td>
-  </tr>`;
+  const tr = document.createElement("tr");
+  tr.append(
+    cell(formatDate(m.played_at)),
+    cell(m.player_a),
+    cell(m.throw_a),
+    cell(m.player_b),
+    cell(m.throw_b),
+    cell(m.winner),
+  );
+  return tr;
 }
 
 function rowLeaderboard(r) {
-  return `<tr>
-    <td>${r.player}</td>
-    <td>${r.wins}</td>
-    <td>${r.losses}</td>
-    <td>${r.draws}</td>
-    <td>${r.games}</td>
-    <td>${r.win_rate}</td>
-  </tr>`;
+  const tr = document.createElement("tr");
+  tr.append(
+    cell(r.player),
+    cell(r.wins),
+    cell(r.losses),
+    cell(r.draws),
+    cell(r.games),
+    cell(r.win_rate),
+  );
+  return tr;
 }
 
 function rowEmpty(colspan, message) {
-  return `<tr><td class="empty" colspan="${colspan}">${message}</td></tr>`;
+  const tr = document.createElement("tr");
+  const td = cell(message, "empty");
+  td.colSpan = colspan;
+  tr.appendChild(td);
+  return tr;
 }
 
 function chartEmpty(message) {
-  topPlayersChart.innerHTML = `<li><span class="empty">${message}</span></li>`;
+  const li = document.createElement("li");
+  const span = document.createElement("span");
+  span.className = "empty";
+  span.textContent = message;
+  li.appendChild(span);
+  topPlayersChart.replaceChildren(li);
 }
 
 function renderTopPlayersChart(rows) {
@@ -56,16 +80,26 @@ function renderTopPlayersChart(rows) {
     return;
   }
   const maxWins = Math.max(...topRows.map((r) => r.wins), 1);
-  topPlayersChart.innerHTML = topRows
-    .map((row) => {
+  topPlayersChart.replaceChildren(
+    ...topRows.map((row) => {
       const width = Math.max(6, Math.round((row.wins / maxWins) * 100));
-      return `<li>
-        <span class="name">${row.player}</span>
-        <span class="bar-wrap"><span class="bar" style="width:${width}%"></span></span>
-        <span class="value">${row.wins}</span>
-      </li>`;
-    })
-    .join("");
+      const li = document.createElement("li");
+      const name = document.createElement("span");
+      name.className = "name";
+      name.textContent = row.player;
+      const barWrap = document.createElement("span");
+      barWrap.className = "bar-wrap";
+      const bar = document.createElement("span");
+      bar.className = "bar";
+      bar.style.width = `${width}%`;
+      barWrap.appendChild(bar);
+      const value = document.createElement("span");
+      value.className = "value";
+      value.textContent = row.wins;
+      li.append(name, barWrap, value);
+      return li;
+    }),
+  );
 }
 
 function paramsFromFilters() {
@@ -89,12 +123,10 @@ async function loadMatches() {
     if (!res.ok) throw new Error(`history failed (${res.status})`);
     const json = await res.json();
     const rows = json.data || [];
-    matchesBody.innerHTML = rows.length
-      ? rows.map(rowMatch).join("")
-      : rowEmpty(6, "No matches for current filter.");
+    replaceRows(matchesBody, rows.map(rowMatch), "No matches for current filter.");
     kpiMatches.textContent = String(rows.length);
   } catch (error) {
-    matchesBody.innerHTML = rowEmpty(6, "Failed to load matches.");
+    matchesBody.replaceChildren(rowEmpty(6, "Failed to load matches."));
     kpiMatches.textContent = "0";
     console.error(error);
   }
@@ -106,12 +138,10 @@ async function loadTodayLeaderboard() {
     if (!res.ok) throw new Error(`today leaderboard failed (${res.status})`);
     const json = await res.json();
     const rows = json.data || [];
-    todayLeaderboardBody.innerHTML = rows.length
-      ? rows.map(rowLeaderboard).join("")
-      : rowEmpty(6, "No players found today.");
+    replaceRows(todayLeaderboardBody, rows.map(rowLeaderboard), "No players found today.");
     kpiTodayPlayers.textContent = String(rows.length);
   } catch (error) {
-    todayLeaderboardBody.innerHTML = rowEmpty(6, "Failed to load today leaderboard.");
+    todayLeaderboardBody.replaceChildren(rowEmpty(6, "Failed to load today leaderboard."));
     kpiTodayPlayers.textContent = "0";
     console.error(error);
   }
@@ -126,12 +156,10 @@ async function loadHistoryLeaderboard() {
     if (!res.ok) throw new Error(`history leaderboard failed (${res.status})`);
     const json = await res.json();
     const rows = json.data || [];
-    historyLeaderboardBody.innerHTML = rows.length
-      ? rows.map(rowLeaderboard).join("")
-      : rowEmpty(6, "No players for selected range.");
+    replaceRows(historyLeaderboardBody, rows.map(rowLeaderboard), "No players for selected range.");
     renderTopPlayersChart(rows);
   } catch (error) {
-    historyLeaderboardBody.innerHTML = rowEmpty(6, "Failed to load historical leaderboard.");
+    historyLeaderboardBody.replaceChildren(rowEmpty(6, "Failed to load historical leaderboard."));
     chartEmpty("Failed to load chart data.");
     console.error(error);
   }
